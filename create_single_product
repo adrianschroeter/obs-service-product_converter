@@ -923,13 +923,18 @@ sub writeProductSPECfile( $$$$ )
       $str.="\n___PRODUCT_DEPENDENCIES___\n";
       $str.="AutoReqProv:    on\n";
       $str.="BuildRoot:      %{_tmppath}/%{name}-%{version}-build\n";
-      if (defined($product->{register}->{updates}->{distrotarget})) {
-        $str.="# this package should only be available for the \"basearchs\" of a product\nExclusiveArch:";
-        foreach my $dt ( @{$product->{register}->{updates}->{distrotarget}} ) {
-          $str.=" $dt->{arch}";
+      my @basearchs; # all base archs of all media
+      foreach my $media ( @{$prodRef->{mediasets}->{media}} ) {
+        foreach my $archsets ( @{$media->{archsets}} ) {
+          foreach my $archset ( @{$archsets->{archset}} ) {
+            push @basearchs, $archset->{ref};
+          }
         }
       }
-      $str.="\n%description\n";
+      $str.="\nExclusiveArch: ";
+      use List::MoreUtils qw(uniq);
+      $str.=join(" ", uniq(@basearchs));
+      $str.="\n\n%description\n";
       for my $description ( @{$product->{'description'} || []} ){
         $str.="$description->{_content}\n" if ( ! $description->{'description'} );
       }
